@@ -2,10 +2,14 @@
 const API_BASE = 'https://reloop360-1.onrender.com/api/products';
 const ORDERS_API = 'https://reloop360-1.onrender.com/api/orders';
 const AUTH_BASE = 'https://reloop360-1.onrender.com/api/auth';
+const MATCH_BASE = 'https://reloop360-1.onrender.com/api/loopmarket';
 
 function getToken(){ return localStorage.getItem('reloop_token'); }
 function getUser(){ try{ return JSON.parse(localStorage.getItem('reloop_user')||'null'); }catch(e){ return null; } }
 function authHeaders(){ const t=getToken(); return t?{ 'Authorization':'Bearer '+t, 'Content-Type':'application/json' }:{ 'Content-Type':'application/json' }; }
+function getPasswordInput(){
+  return document.getElementById('authPassword') || document.querySelector('#loginPage input[type="password"]');
+}
 
 /* ---------- auth ---------- */
 let selectedRole='Community', authMode='login';
@@ -23,7 +27,8 @@ function pickRole(el){
 }
 async function openApp(){
   const email=document.getElementById('authEmail').value.trim();
-  const password=document.querySelector('#loginPage input[type="password"]').value;
+  const passwordEl = getPasswordInput();
+  const password = passwordEl ? passwordEl.value : '';
   if(!email||!password){ toast('Enter an email and password'); return; }
 
   const url = authMode==='signup' ? AUTH_BASE+'/register' : AUTH_BASE+'/login';
@@ -107,7 +112,7 @@ function openTour(){
   openCustom('How ReLoop 360 works',`
     <div class="tour-steps">
       <div class="tour-step"><div class="ti" style="background:var(--steel-light);color:var(--steel)">🏭</div><div><b>1. Industrial Exchange</b><p>Industries list surplus materials. After a one-time company ID check, Smart Match suggests the best-fit recyclers or NGOs for each listing.</p></div></div>
-      <div class="tour-step"><div class="ti" style="background:var(--green-light);color:var(--green)">♻</div><div><b>2. LoopMarket</b><p>Real listings from real accounts. Request an item — the seller can accept or reject your request from their My Account.</p></div></div>
+      <div class="tour-step"><div class="ti" style="background:var(--green-light);color:var(--green)">♻</div><div><b>2. LoopMarket</b><p>Real listings from real accounts. Request an item — the seller can accept or reject your request from their My Account. Use "Find Match" to see who else wants a similar item.</p></div></div>
       <div class="tour-step"><div class="ti" style="background:var(--amber-light);color:var(--amber)">💚</div><div><b>3. Donate & ReLoop</b><p>Give items directly to verified NGO partners by category.</p></div></div>
     </div>
     <button class="primary" style="margin-top:16px" onclick="closeModal()">Got it</button>`);
@@ -156,12 +161,35 @@ function render(){
 function card(p){
   const w=wishlist.includes(p._id);
   const isTaken = p.status==='requested' || p.status==='sold';
-  return `<article class="product"><div class="pimg">${p.icon||'📦'}<button class="wish" onclick="toggleWish('${p._id}')">${w?'♥':'♡'}</button></div><div class="pbody"><span class="pbadge ${p.price===0?'free':''}">${p.cat} • ${p.cond}</span>${p.exchange?'<span class="pbadge" style="background:#eef0fb;color:#4338ca;margin-left:5px">🔄 Swap OK</span>':''}<h3>${p.name}</h3><div class="price">${p.price?'₹'+p.price.toLocaleString():'FREE'}</div><div class="meta">${p.loc} ${p.verified?'• ✓ Verified seller':''}</div><div class="seller">Seller: ${p.seller}</div><div class="card-actions">${isTaken?'<button class="add" disabled>Already Requested</button>':`<button class="add" onclick="requestItem('${p._id}','buy')">Request Item</button>`}${p.exchange?`<button class="outline" onclick="requestItem('${p._id}','exchange')">🔄 Swap</button>`:''}</div></div></article>`;
+  return `<article class="product"><div class="pimg">${p.icon||'📦'}<button class="wish" onclick="toggleWish('${p._id}')">${w?'♥':'♡'}</button></div><div class="pbody"><span class="pbadge ${p.price===0?'free':''}">${p.cat} • ${p.cond}</span>${p.exchange?'<span class="pbadge" style="background:#eef0fb;color:#4338ca;margin-left:5px">🔄 Swap OK</span>':''}<h3>${p.name}</h3><div class="price">${p.price?'₹'+p.price.toLocaleString():'FREE'}</div><div class="meta">${p.loc} ${p.verified?'• ✓ Verified seller':''}</div><div class="seller">Seller: ${p.seller}</div><div class="card-actions">${isTaken?'<button class="add" disabled>Already Requested</button>':`<button class="add" onclick="requestItem('${p._id}','buy')">Request Item</button>`}${p.exchange?`<button class="outline" onclick="requestItem('${p._id}','exchange')">🔄 Swap</button>`:''}<button class="outline" onclick="findMatches('${p._id}')">🔍 Find Match</button></div></div></article>`;
 }
 function toggleWish(id){wishlist=wishlist.includes(id)?wishlist.filter(x=>x!==id):[...wishlist,id];render();toast('Wishlist updated')}
 function openWishlist(){
   const items=products.filter(p=>wishlist.includes(p._id));
   openCustom('Wishlist',items.length?items.map(p=>`<div class="cart-item"><div class="cart-icon">${p.icon||'📦'}</div><div><b>${p.name}</b><div style="color:var(--muted);font-size:12px">${p.price?'₹'+p.price.toLocaleString():'FREE'}</div></div></div>`).join(''):'<p style="color:var(--muted)">Your wishlist is empty.</p>');
+}
+
+/* ---------- matching feature ---------- */
+async function findMatches(productId){
+  openCustom('Finding matches…', '<p style="color:var(--muted);font-size:13px">Searching for people who want something like this…</p>');
+  try{
+    const res = await fetch(MATCH_BASE+'/matches/'+productId);
+    const data = await res.json();
+    if(!res.ok){ document.getElementById('modalBody').innerHTML='<p style="color:var(--muted)">'+(data.message||'Could not run matching')+'</p>'; return; }
+
+    const matches = data.matches || [];
+    document.getElementById('modalTitle').textContent = 'Matches for "'+data.product.name+'"';
+    if(!matches.length){
+      document.getElementById('modalBody').innerHTML = '<p style="color:var(--muted);font-size:13px">No matches yet. We\'ll keep looking as more people post what they want.</p>';
+      return;
+    }
+    document.getElementById('modalBody').innerHTML = matches.map(m=>{
+      const item = m.product;
+      return `<div class="match-card"><div><div class="mname">${item.icon||'📦'} ${item.name}</div><div class="mtag">Wants a match • ${item.loc||''}</div></div><span class="match-score">${m.score} pts match</span></div>`;
+    }).join('');
+  }catch(err){
+    document.getElementById('modalBody').innerHTML='<p style="color:var(--muted)">Could not reach the server.</p>';
+  }
 }
 
 /* ---------- real requests via backend ---------- */
@@ -198,14 +226,26 @@ function openDonation(type){
   showView('formView');
 }
 
-/* ---------- sell form: real POST to backend ---------- */
+/* ---------- sell / want form: real POST to backend ---------- */
+let formListingType = 'sell';
 function openSell(){
+  formListingType='sell';
   document.getElementById('formTitle').textContent='Sell an Item';
   document.getElementById('itemCategory').value=activeCat!=='All'?activeCat:'';
   document.getElementById('photoField').classList.remove('hidden');
   document.getElementById('notice').classList.remove('show');
   document.getElementById('wantField').classList.add('hidden');
   document.getElementById('sellNudge').classList.add('show');
+  showView('formView');
+}
+function openWantForm(){
+  formListingType='want';
+  document.getElementById('formTitle').textContent="What are you looking for?";
+  document.getElementById('itemCategory').value='';
+  document.getElementById('photoField').classList.add('hidden');
+  document.getElementById('notice').classList.remove('show');
+  document.getElementById('wantField').classList.add('hidden');
+  document.getElementById('sellNudge').classList.remove('show');
   showView('formView');
 }
 function dismissNudge(){document.getElementById('sellNudge').classList.remove('show');toast('Continuing as a sale listing')}
@@ -221,10 +261,11 @@ async function submitForm(){
   if(!name){toast('Please enter an item or material name');return}
   try{
     const res = await fetch(API_BASE, { method:'POST', headers: authHeaders(), body: JSON.stringify({
-      name, cat, price:0, cond:'Good', loc:'Chennai', exchange:false
+      name, cat, price:0, cond:'Good', loc:'Chennai', exchange:false, listingType: formListingType
     })});
     const data = await res.json();
     if(!res.ok){ toast(data.message || 'Could not save listing'); return; }
+    toast(formListingType==='want' ? 'Posted what you\'re looking for' : 'Listing posted');
     document.getElementById('notice').classList.add('show');
     document.getElementById('itemName').value='';
     loadProducts();
