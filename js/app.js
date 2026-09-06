@@ -1,4 +1,5 @@
-const API_BASE = 'https://reloop360.onrender.com/api/products';
+const API_BASE = 'https://reloop360-1.onrender.com/api/products';
+const ORDERS_API = 'https://reloop360-1.onrender.com/api/orders';
 
 /* ---------- auth ---------- */
 let selectedRole='Community';
@@ -153,10 +154,12 @@ function render(){
 }
 function card(p){
   const w=wishlist.includes(p.id);
+  const cleanName = p.name.replace(/'/g,'');
+  const isTaken = p.status==='requested' || p.status==='sold';
   let html = '<article class="product"><div class="pimg">'+p.icon+'<button class="wish" onclick="toggleWish(\''+p.id+'\')">'+(w?'♥':'♡')+'</button></div><div class="pbody"><span class="pbadge '+(p.price===0?'free':'')+'">'+p.cat+' • '+p.cond+'</span>';
   if(p.exchange){ html += '<span class="pbadge" style="background:#eef0fb;color:#4338ca;margin-left:5px">🔄 Swap OK</span>'; }
-  html += '<h3>'+p.name+'</h3><div class="price">'+(p.price?'₹'+p.price.toLocaleString():'FREE')+'</div><div class="meta">'+p.loc+' '+(p.verified?'• ✓ Verified seller':'')+'</div><div class="seller">Seller: '+p.seller+'</div><div class="card-actions"><button class="add" onclick="addCart(\''+p.id+'\')">Add to Cart</button>';
-  const cleanName = p.name.replace(/'/g,'');
+  html += '<h3>'+p.name+'</h3><div class="price">'+(p.price?'₹'+p.price.toLocaleString():'FREE')+'</div><div class="meta">'+p.loc+' '+(p.verified?'• ✓ Verified seller':'')+'</div><div class="seller">Seller: '+p.seller+'</div><div class="card-actions">';
+  html += isTaken ? '<button class="add" disabled>Already Requested</button>' : '<button class="add" onclick="requestItem(\''+p.id+'\',\''+cleanName+'\')">Request Item</button>';
   if(p.exchange){
     html += '<button class="outline" onclick="openExchangeForm(\''+cleanName+'\')">🔄 Swap</button>';
   } else {
@@ -164,6 +167,26 @@ function card(p){
   }
   html += '</div></div></article>';
   return html;
+}
+function requestItem(id, name){
+  const buyerName = prompt('Your name (so the seller knows who\'s asking):');
+  if(!buyerName) return;
+
+  fetch(ORDERS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productId: id, buyerName: buyerName, mode: 'buy' }),
+  })
+    .then(function(res){ return res.json().then(function(data){ return { ok: res.ok, data: data }; }); })
+    .then(function(result){
+      if(!result.ok){ toast(result.data.message || 'Could not send request'); return; }
+      toast('Request sent for "'+name+'" — waiting on seller');
+      fetchProducts();
+    })
+    .catch(function(err){
+      console.error('Request failed:', err);
+      toast('Could not reach backend — is it running?');
+    });
 }
 function toggleWish(id){
   wishlist=wishlist.includes(id)?wishlist.filter(function(x){return x!==id;}):wishlist.concat([id]);
@@ -173,42 +196,19 @@ function toggleWish(id){
 function openWishlist(){
   const items=products.filter(function(p){return wishlist.includes(p.id);});
   const body = items.length ? items.map(function(p){
-    return '<div class="cart-item"><div class="cart-icon">'+p.icon+'</div><div><b>'+p.name+'</b><div style="color:var(--muted);font-size:12px">'+(p.price?'₹'+p.price.toLocaleString():'FREE')+'</div><button class="add" style="margin-top:8px" onclick="addCart(\''+p.id+'\');closeModal()">Add to cart</button></div></div>';
+    return '<div class="cart-item"><div class="cart-icon">'+p.icon+'</div><div><b>'+p.name+'</b><div style="color:var(--muted);font-size:12px">'+(p.price?'₹'+p.price.toLocaleString():'FREE')+'</div><button class="add" style="margin-top:8px" onclick="requestItem(\''+p.id+'\',\''+p.name.replace(/'/g,'')+'\');closeModal()">Request Item</button></div></div>';
   }).join('') : '<p style="color:var(--muted)">Your wishlist is empty.</p>';
   openCustom('Wishlist', body);
 }
-function addCart(id){
-  const p=products.find(function(x){return x.id===id;});
-  const x=cart.find(function(x){return x.id===id;});
-  if(x){ x.qty++; } else { cart.push(Object.assign({}, p, {qty:1})); }
-  updateCart(); openCart(); toast('Added to cart');
-}
+function openCart(){ document.getElementById('cartOverlay').classList.remove('hidden'); updateCart(); }
+function closeCart(){ document.getElementById('cartOverlay').classList.add('hidden'); }
 function updateCart(){
   document.getElementById('cartCount').textContent=cart.reduce(function(a,b){return a+b.qty;},0);
   const el=document.getElementById('cartItems');
-  el.innerHTML = cart.length ? cart.map(function(x){
-    return '<div class="cart-item"><div class="cart-icon">'+x.icon+'</div><div style="flex:1"><b>'+x.name+'</b><div style="color:var(--muted);font-size:12px">'+(x.price?'₹'+x.price.toLocaleString():'FREE')+' each</div><div class="qty"><button onclick="changeQty(\''+x.id+'\',-1)">−</button>'+x.qty+'<button onclick="changeQty(\''+x.id+'\',1)">+</button></div></div><b>'+(x.price?'₹'+(x.price*x.qty).toLocaleString():'FREE')+'</b></div>';
-  }).join('') : '<p style="color:var(--muted)">Your cart is empty.</p>';
+  el.innerHTML = '<p style="color:var(--muted)">Use "Request Item" on a listing to contact the seller directly.</p>';
 }
-function changeQty(id,d){
-  const x=cart.find(function(x){return x.id===id;});
-  if(x){ x.qty+=d; if(x.qty<=0){ cart=cart.filter(function(y){return y.id!==id;}); } }
-  updateCart();
-}
-function openCart(){ document.getElementById('cartOverlay').classList.remove('hidden'); updateCart(); }
-function closeCart(){ document.getElementById('cartOverlay').classList.add('hidden'); }
 function startPayment(){
-  if(!cart.length){ toast('Your cart is empty'); return; }
-  const total=cart.reduce(function(a,b){return a+b.price*b.qty;},0);
-  const body = '<p style="color:var(--muted);font-size:13px">Demo checkout — no real payment is taken.</p><div style="background:#f3f8f5;padding:14px;border-radius:10px;margin-top:12px"><b>Total: '+(total?'₹'+total.toLocaleString():'FREE')+'</b></div><button class="primary" style="margin-top:14px" onclick="completeOrder()">Confirm order ✓</button>';
-  openCustom('Confirm order', body);
-}
-function completeOrder(){
-  const total=cart.reduce(function(a,b){return a+b.price*b.qty;},0);
-  const order={id:'RL-'+Date.now().toString().slice(-8),date:new Date().toLocaleString(),items:cart.map(function(x){return x.name;}),total:total};
-  orders.unshift(order);
-  activities.unshift({time:order.date,text:'Order placed '+order.id});
-  cart=[]; updateCart(); closeModal(); toast('Order confirmed — '+order.id);
+  toast('Use "Request Item" on a listing to contact the seller — no in-app payment needed');
 }
 
 /* ---------- exchange offers ---------- */
@@ -299,16 +299,13 @@ function submitForm(){
 
 /* ---------- account ---------- */
 function openAccount(){
-  const total=orders.reduce(function(a,o){return a+o.total;},0);
   const activityHtml = activities.length ? activities.slice(0,8).map(function(a){
     return '<div class="activity-row"><span>•</span><div><b>'+a.text+'</b><small>'+a.time+'</small></div></div>';
-  }).join('') : '<p style="color:var(--muted);font-size:13px">Your orders, listings and donations will appear here.</p>';
+  }).join('') : '<p style="color:var(--muted);font-size:13px">Your requests, listings and donations will appear here.</p>';
 
   const body = '<div class="account-grid">' +
-    '<div class="account-tile"><span class="tile-icon">🛒</span><b>Cart</b><span style="color:var(--muted);font-size:12px">'+cart.reduce(function(a,b){return a+b.qty;},0)+' item(s)</span></div>' +
     '<div class="account-tile"><span class="tile-icon">♥</span><b>Favourites</b><span style="color:var(--muted);font-size:12px">'+wishlist.length+' saved</span></div>' +
-    '<div class="account-tile"><span class="tile-icon">📦</span><b>Orders</b><span style="color:var(--muted);font-size:12px">'+orders.length+' completed</span></div>' +
-    '<div class="account-tile"><span class="tile-icon">₹</span><b>Total spent</b><span style="color:var(--muted);font-size:12px">₹'+total.toLocaleString()+'</span></div>' +
+    '<div class="account-tile"><span class="tile-icon">📦</span><b>Requests</b><span style="color:var(--muted);font-size:12px">'+activities.length+' total</span></div>' +
     '</div><h3 class="section-title" style="margin-top:20px">Recent activity</h3>' + activityHtml;
 
   openCustom('My Account', body);
@@ -327,4 +324,64 @@ function toast(msg){
   t.classList.remove('hidden');
   clearTimeout(window._tt);
   window._tt=setTimeout(function(){ t.classList.add('hidden'); },2200);
+}
+/* ---------- seller: manage requests ---------- */
+function openMyRequests(){
+  const sellerName = prompt('Enter your seller name (as used on your listings) to view requests:');
+  if(!sellerName) return;
+
+  fetch(ORDERS_API + '?seller=' + encodeURIComponent(sellerName))
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      const orders = data.orders || [];
+      const body = orders.length ? orders.map(function(o){
+        const p = o.product || {};
+        const actions = o.status === 'pending'
+          ? '<button class="add" onclick="respondOrder(\''+o._id+'\',\'accepted\',\''+sellerName.replace(/'/g,'')+'\')">Accept</button>' +
+            '<button class="outline" onclick="respondOrder(\''+o._id+'\',\'rejected\',\''+sellerName.replace(/'/g,'')+'\')">Reject</button>'
+          : (o.status === 'accepted'
+              ? '<button class="add" onclick="respondOrder(\''+o._id+'\',\'completed\',\''+sellerName.replace(/'/g,'')+'\')">Mark Completed</button>'
+              : '<span class="pbadge">'+o.status+'</span>');
+        return '<div class="cart-item"><div class="cart-icon">'+(p.icon||'📦')+'</div><div style="flex:1"><b>'+(p.name||'Item')+'</b><div style="color:var(--muted);font-size:12px">Requested by '+o.buyerName+' • '+o.mode+' • '+o.status+'</div></div><div style="display:flex;gap:6px">'+actions+'</div></div>';
+      }).join('') : '<p style="color:var(--muted)">No requests yet on your listings.</p>';
+      openCustom('Requests on your listings', body);
+    })
+    .catch(function(err){
+      console.error('Failed to load requests:', err);
+      toast('Could not reach backend — is it running?');
+    });
+}
+
+function respondOrder(orderId, status, sellerName){
+  fetch(ORDERS_API + '/' + orderId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: status }),
+  })
+    .then(function(res){ return res.json().then(function(data){ return { ok: res.ok, data: data }; }); })
+    .then(function(result){
+      if(!result.ok){ toast(result.data.message || 'Could not update request'); return; }
+      toast('Request marked ' + status);
+      openMyRequests.call(null);
+      fetch(ORDERS_API + '?seller=' + encodeURIComponent(sellerName))
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          const orders = data.orders || [];
+          const body = orders.length ? orders.map(function(o){
+            const p = o.product || {};
+            const actions = o.status === 'pending'
+              ? '<button class="add" onclick="respondOrder(\''+o._id+'\',\'accepted\',\''+sellerName.replace(/'/g,'')+'\')">Accept</button>' +
+                '<button class="outline" onclick="respondOrder(\''+o._id+'\',\'rejected\',\''+sellerName.replace(/'/g,'')+'\')">Reject</button>'
+              : (o.status === 'accepted'
+                  ? '<button class="add" onclick="respondOrder(\''+o._id+'\',\'completed\',\''+sellerName.replace(/'/g,'')+'\')">Mark Completed</button>'
+                  : '<span class="pbadge">'+o.status+'</span>');
+            return '<div class="cart-item"><div class="cart-icon">'+(p.icon||'📦')+'</div><div style="flex:1"><b>'+(p.name||'Item')+'</b><div style="color:var(--muted);font-size:12px">Requested by '+o.buyerName+' • '+o.mode+' • '+o.status+'</div></div><div style="display:flex;gap:6px">'+actions+'</div></div>';
+          }).join('') : '<p style="color:var(--muted)">No requests yet on your listings.</p>';
+          openCustom('Requests on your listings', body);
+        });
+    })
+    .catch(function(err){
+      console.error('Update failed:', err);
+      toast('Could not reach backend — is it running?');
+    });
 }
