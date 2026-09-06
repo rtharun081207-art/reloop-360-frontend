@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReLoop 360 | Smart Circular Waste Exchange Platform</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section class="login-page" id="loginPage">
+  <div class="login-info">
+    <div class="brand"><span>♻</span> RELOOP 360</div>
+    <div class="login-copy">
+      <span class="ps-tag">SIH26195 · Clean &amp; Green Technology</span>
+      <h1>Turn surplus into <em>value.</em></h1>
+      <p>One platform connecting industries, recyclers, NGOs and communities — so usable waste gets reused, recycled or donated instead of dumped, with every exchange tracked and transparent.</p>
+      <div class="audience-row">
+        <div>🏭 Industries</div>
+        <div>♻️ Recyclers</div>
+        <div>💚 NGOs</div>
+        <div>🏘️ Communities</div>
+      </div>
+    </div>
+    <div class="login-foot">Team EcoForge · Smart India Hackathon 2026</div>
+  </div>
+  <div class="login-box">
+    <div class="auth-card">
+      <h2 id="authHeading">Welcome back</h2>
+      <p class="sub" id="authSub">Sign in to your ReLoop 360 dashboard.</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="setAuthMode('login')">Log in</button>
+        <button class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Sign up</button>
+      </div>
+      <div id="roleBlock" class="hidden">
+        <div class="field"><label>I am signing up as</label></div>
+        <div class="role-select">
+          <button class="role-opt sel" data-role="Community" onclick="pickRole(this)"><b>🏘️ Community</b><small>Buy, sell, donate</small></button>
+          <button class="role-opt" data-role="Industry" onclick="pickRole(this)"><b>🏭 Industry</b><small>List surplus materials</small></button>
+          <button class="role-opt" data-role="Recycler" onclick="pickRole(this)"><b>♻️ Recycler</b><small>Source reusable waste</small></button>
+          <button class="role-opt" data-role="NGO" onclick="pickRole(this)"><b>💚 NGO</b><small>Receive donations</small></button>
+        </div>
+      </div>
+      <div class="field"><label>Email address</label><input id="authEmail" type="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" placeholder="Enter your password"></div>
+      <button class="primary" onclick="openApp()">Continue to ReLoop 360</button>
+      <p class="demo-note">Demo frontend — any email &amp; password opens the dashboard.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<section class="app hidden" id="app">
+  <aside class="sidebar">
+    <div class="side-brand"><span>♻</span> RELOOP 360</div>
+    <div class="nav-label">Navigate</div>
+    <button class="nav-btn active" onclick="showView('home',this)">⌂ Dashboard</button>
+    <button class="nav-btn" onclick="enterIndustrial(this)" style="display:flex">🏭 Industrial Exchange <span class="lock-tag" id="navLock">🔒</span></button>
+    <button class="nav-btn" onclick="showView('market',this)">♻ LoopMarket</button>
+    <button class="nav-btn" onclick="showView('exchange',this)">🔄 Exchange Offers</button>
+    <button class="nav-btn" onclick="showView('donate',this)">💚 Donate &amp; ReLoop</button>
+    <button class="nav-btn" onclick="openAccount()">👤 My Account</button>
+    <button class="nav-btn" onclick="openTour()">❔ How this works</button>
+    <div class="side-foot">Signed in as <span id="sideRole">Community</span></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="top-actions">
+        <button class="icon-btn" onclick="openTour()" title="How this works">❔</button>
+        <button class="icon-btn" onclick="openWishlist()">♡<span class="badge" id="wishCount">0</span></button>
+        <button class="icon-btn" onclick="openCart()">🛒<span class="badge" id="cartCount">0</span></button>
+        <div class="user"><span id="userLine">Welcome, User</span><div class="avatar" id="avatarInit">U</div></div>
+      </div>
+    </header>
+
+    <!-- HOME -->
+    <div class="view active" id="home">
+      <div class="hero green">
+        <h2>Welcome to ReLoop 360 👋</h2>
+        <p>A single digital platform where industries, recyclers, NGOs and communities exchange usable waste and surplus — reducing disposal, cutting costs, and keeping useful materials in circulation.</p>
+      </div>
+      <div class="stat-strip">
+        <div class="stat"><b id="statKg">1,240 kg</b><span>Materials diverted from waste</span></div>
+        <div class="stat"><b id="statTx">86</b><span>Exchanges completed</span></div>
+        <div class="stat"><b id="statVal">₹52,300</b><span>Value recovered by sellers</span></div>
+        <div class="stat"><b id="statDonate">37</b><span>Items donated to NGOs</span></div>
+      </div>
+      <div class="grid3">
+        <div class="module" onclick="enterIndustrial()">
+          <div class="micon" style="background:var(--steel-light);color:var(--steel)">🏭</div>
+          <h3>Industrial Exchange</h3>
+          <p>Trade, source and list surplus industrial materials, with smart matching to nearby recyclers and NGOs. Requires a verified company ID.</p>
+          <span class="tag" style="color:var(--steel)">Open module →</span>
+        </div>
+        <div class="module" onclick="showView('market')">
+          <div class="micon" style="background:var(--green-light);color:var(--green)">♻️</div>
+          <h3>LoopMarket</h3>
+          <p>Buy and sell pre-owned books, clothes, electronics and furniture within your community.</p>
+          <span class="tag" style="color:var(--green)">Open marketplace →</span>
+        </div>
+        <div class="module" onclick="showView('donate')">
+          <div class="micon" style="background:var(--amber-light);color:var(--amber)">💚</div>
+          <h3>Donate &amp; ReLoop</h3>
+          <p>Give clothes, books, e-materials, food and more to verified NGOs and community drives.</p>
+          <span class="tag" style="color:var(--amber)">Start donating →</span>
+        </div>
+        <div class="module" onclick="showView('exchange')">
+          <div class="micon" style="background:#eef0fb;color:#4338ca">🔄</div>
+          <h3>Exchange Offers</h3>
+          <p>Swap items directly — offer a book, gadget or clothing item for something you need instead, no money involved.</p>
+          <span class="tag" style="color:#4338ca">Open exchange →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDUSTRIAL -->
+    <div class="view" id="industrial">
+      <div class="hero steel">
+        <h2>🏭 Industrial Exchange</h2>
+        <p>Connect surplus industrial materials with recyclers and NGOs. Smart matching suggests the best partner for every listing based on material type, quantity and location.</p>
+        <div class="info-line" id="verifyStatusLine">🔒 This module is limited to verified industry accounts — a one-time company ID check keeps material sourcing traceable and trustworthy, as required by verified partners like recyclers and NGOs.</div>
+      </div>
+      <div class="action-grid">
+        <button class="action" onclick="openMaterialForm('List Surplus Material')">🏭<strong>List Surplus</strong><small>Post materials your industry no longer needs.</small></button>
+        <button class="action" onclick="showView('industrialBrowse')">🔎<strong>Browse Listings</strong><small>Find reusable industrial materials nearby.</small></button>
+        <button class="action" onclick="runSmartMatch()">🤝<strong>Run Smart Match</strong><small>Get AI-suggested recyclers &amp; NGOs for your surplus.</small></button>
+      </div>
+      <h3 class="section-title">Suggested matches</h3>
+      <div class="match-list" id="matchList"></div>
+    </div>
+
+    <div class="view" id="industrialBrowse">
+      <div class="breadcrumb"><span class="back" onclick="showView('industrial')">← Industrial Exchange</span></div>
+      <h3 class="section-title">Available Industrial Listings</h3>
+      <div class="match-list" id="industrialList"></div>
+    </div>
+
+    <!-- MARKET -->
+    <div class="view" id="market">
+      <div class="hero green">
+        <h2>♻️ LoopMarket</h2>
+        <p>Give pre-owned goods another loop. Browse by category, or list something you no longer need — we'll always show you the option to donate it instead.</p>
+      </div>
+      <div class="market-layout">
+        <aside class="filters">
+          <div class="filter-title"><b>Filters</b><button class="chip" onclick="clearFilters()">Reset</button></div>
+          <div class="filter-group">
+            <h4>Category</h4>
+            <label><input type="radio" name="fc" value="All" checked onchange="filterCat(this.value)"> All</label>
+            <label><input type="radio" name="fc" value="Books" onchange="filterCat(this.value)"> Books</label>
+            <label><input type="radio" name="fc" value="Clothes" onchange="filterCat(this.value)"> Clothes &amp; Textiles</label>
+            <label><input type="radio" name="fc" value="E-Waste" onchange="filterCat(this.value)"> E-Materials</label>
+            <label><input type="radio" name="fc" value="Furniture" onchange="filterCat(this.value)"> Furniture</label>
+          </div>
+          <div class="filter-group">
+            <h4>Listing type</h4>
+            <label><input type="checkbox" id="freeOnly" onchange="render()"> Free / donated items only</label>
+            <label><input type="checkbox" id="verifiedOnly" onchange="render()"> Verified seller only</label>
+            <label><input type="checkbox" id="exchangeOnly" onchange="render()"> Open to exchange/swap only</label>
+          </div>
+          <div class="filter-group">
+            <h4>Location</h4>
+            <select id="locationFilter" onchange="render()" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px">
+              <option value="all">All locations</option><option>Chennai</option><option>Bengaluru</option><option>Coimbatore</option><option>Hyderabad</option>
+            </select>
+          </div>
+        </aside>
+        <div>
+          <div class="toolbar">
+            <span class="muted" id="resultText" style="font-size:12.5px;color:var(--muted)"></span>
+            <span class="grow"></span>
+            <select id="sort" onchange="render()"><option value="popular">Popular</option><option value="low">Price: Low to High</option><option value="high">Price: High to Low</option></select>
+            <button class="chip" onclick="openSell()">＋ Sell an item</button>
+          </div>
+          <div id="products" class="products"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXCHANGE OFFERS -->
+    <div class="view" id="exchange">
+      <div class="hero" style="background:linear-gradient(120deg,#fff,#eef0fb);border:1px solid var(--line)">
+        <h2>🔄 Exchange Offers</h2>
+        <p>Swap what you have for what you need — books, gadgets, clothes and more — without money changing hands. Post an item you're offering and what you'd take in return.</p>
+      </div>
+      <div class="action-grid" style="grid-template-columns:1fr 1fr">
+        <button class="action" onclick="openExchangeForm()">🔄<strong>Post an Exchange</strong><small>Offer an item and say what you'd swap it for.</small></button>
+        <button class="action" onclick="showView('market');document.getElementById('exchangeOnly').checked=true;render()">📚<strong>Browse Swappable Items in LoopMarket</strong><small>See LoopMarket listings their owners are open to swapping.</small></button>
+      </div>
+      <h3 class="section-title">Open swap offers</h3>
+      <div class="match-list" id="exchangeList"></div>
+    </div>
+
+    <!-- DONATE -->
+    <div class="view" id="donate">
+      <div class="hero amber">
+        <h2>💚 Donate &amp; ReLoop</h2>
+        <p>Give useful items a new purpose. Choose a category, then pick a verified NGO or community drive to receive it.</p>
+      </div>
+      <div class="donate-grid">
+        <div class="donate" onclick="openDonation('Clothes')"><div>👕</div><b>Clothes</b></div>
+        <div class="donate" onclick="openDonation('Books')"><div>📚</div><b>Books</b></div>
+        <div class="donate" onclick="openDonation('E-Materials')"><div>💻</div><b>E-Materials</b></div>
+        <div class="donate" onclick="openDonation('Food')"><div>🍱</div><b>Food</b></div>
+        <div class="donate" onclick="openDonation('Other')"><div>📦</div><b>Other Items</b></div>
+      </div>
+      <h3 class="section-title">Verified NGO partners</h3>
+      <div class="ngo-list">
+        <div class="ngo"><b>Goodwill Circle Chennai</b><p>Clothing &amp; household redistribution</p><button class="chip" onclick="openDonation('Clothes')">Donate here</button></div>
+        <div class="ngo"><b>ReadForward Trust</b><p>Books for under-resourced schools</p><button class="chip" onclick="openDonation('Books')">Donate here</button></div>
+        <div class="ngo"><b>TechBridge Foundation</b><p>Refurbished devices for students</p><button class="chip" onclick="openDonation('E-Materials')">Donate here</button></div>
+      </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="view" id="formView">
+      <div class="breadcrumb"><span class="back" onclick="showView('home')">← Dashboard</span></div>
+      <div class="form-panel">
+        <h3 id="formTitle">Create Listing</h3>
+        <p class="sub">Add basic information about your material or item.</p>
+        <div class="row">
+          <div class="field"><label>Item / Material name</label><input id="itemName" placeholder="e.g. Surplus cotton fabric"></div>
+          <div class="field"><label>Category</label><input id="itemCategory" placeholder="Category"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Quantity</label><input placeholder="e.g. 50 kg / 5 items"></div>
+          <div class="field"><label>Condition</label><select><option>New</option><option>Good</option><option>Used</option><option>For Recycling</option></select></div>
+        </div>
+        <div class="field"><label>Location</label><input placeholder="City / area"></div>
+        <div class="field hidden" id="wantField"><label>What would you like in return?</label><input id="wantInput" placeholder="e.g. Any cookbook, comics, or a similar-value gadget"></div>
+        <div class="field" id="photoField">
+          <label>Photos (optional)</label>
+          <div class="upload-box" onclick="document.getElementById('photoInput').click()">
+            <b>＋ Add photos</b><small>JPG, PNG or WEBP — up to 6</small>
+            <input id="photoInput" type="file" accept="image/*" multiple hidden onchange="previewPhotos(this)">
+          </div>
+          <div id="photoPreview" class="photo-preview"></div>
+        </div>
+        <div class="nudge" id="sellNudge">
+          <b>💚 Someone nearby could use this</b>
+          <p>Instead of selling, you can donate this item directly to a verified NGO — it's picked up and tracked the same way.</p>
+          <div class="nudge-actions">
+            <button class="keep" onclick="dismissNudge()">Keep selling</button>
+            <button class="donate-btn" onclick="switchToDonate()">Donate it instead</button>
+          </div>
+        </div>
+        <button class="primary" style="margin-top:16px" onclick="submitForm()">Submit</button>
+        <div class="notice" id="notice">✓ Submitted successfully — added to the demo system.</div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- cart drawer -->
+<div id="cartOverlay" class="overlay hidden" onclick="if(event.target===this)closeCart()">
+  <div class="drawer">
+    <div class="drawer-head"><h3>Your Cart</h3><button class="close" onclick="closeCart()">✕</button></div>
+    <div id="cartItems"></div>
+    <button class="checkout" onclick="startPayment()">Checkout</button>
+  </div>
+</div>
+
+<!-- generic modal -->
+<div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-top"><h3 id="modalTitle"></h3><button class="close" onclick="closeModal()">✕</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
