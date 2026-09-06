@@ -242,7 +242,7 @@ async function openAccount(){
     const data = await res.json();
     if(!res.ok){ document.getElementById('modalBody').innerHTML='<p style="color:var(--muted)">'+(data.message||'Could not load your account')+'</p>'; return; }
 
-    const sentHtml = data.sent.length ? data.sent.map(o=>`<div class="activity-row"><span>•</span><div><b>${o.product?o.product.name:'Item'}</b><small>Status: ${o.status} — ${new Date(o.createdAt).toLocaleString()}</small></div></div>`).join('') : '<p style="color:var(--muted);font-size:12.5px">You haven\\'t requested anything yet.</p>';
+    const sentHtml = data.sent.length ? data.sent.map(o=>`<div class="activity-row"><span>•</span><div><b>${o.product?o.product.name:'Item'}</b><small>Status: ${o.status} — ${new Date(o.createdAt).toLocaleString()}</small></div></div>`).join('') : '<p style="color:var(--muted);font-size:12.5px">You have not requested anything yet.</p>';
 
     const receivedHtml = data.received.length ? data.received.map(o=>`<div class="activity-row" style="align-items:center;justify-content:space-between"><div><b>${o.product?o.product.name:'Item'}</b><small>Requested by ${o.buyerName} — ${o.status}</small></div>${o.status==='pending'?`<div style="display:flex;gap:6px"><button class="chip" onclick="respondOrder('${o._id}','accepted')">Accept</button><button class="chip" onclick="respondOrder('${o._id}','rejected')">Reject</button></div>`:''}</div>`).join('') : '<p style="color:var(--muted);font-size:12.5px">No requests on your items yet.</p>';
 
