@@ -333,4 +333,15 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
     showView('home');
     loadProducts();
   }
+  function card(p){
+  const w=wishlist.includes(p._id);
+  const isTaken = p.status==='requested' || p.status==='sold';
+  const requestBtn = isTaken
+    ? '<button class="chip" disabled style="opacity:0.5;cursor:not-allowed">Already Requested</button>'
+    : `<button class="chip" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="requestItem('${p._id}','buy')">Request Item</button>`;
+  const swapBtn = p.exchange
+    ? `<button class="chip" onclick="requestItem('${p._id}','exchange')">🔄 Swap</button>`
+    : '';
+  return `<article class="product"><div class="pimg">${p.icon||'📦'}<button class="wish" onclick="toggleWish('${p._id}')">${w?'♥':'♡'}</button></div><div class="pbody"><span class="pbadge ${p.price===0?'free':''}">${p.cat} • ${p.cond}</span>${p.exchange?'<span class="pbadge" style="background:#eef0fb;color:#4338ca;margin-left:5px">🔄 Swap OK</span>':''}<h3>${p.name}</h3><div class="price">${p.price?'₹'+p.price.toLocaleString():'FREE'}</div><div class="meta">${p.loc} ${p.verified?'• ✓ Verified seller':''}</div><div class="seller">Seller: ${p.seller}</div><div class="card-actions" style="display:flex;flex-wrap:wrap;gap:6px">${requestBtn}${swapBtn}<button class="chip" onclick="findMatches('${p._id}')">🔍 Find Match</button></div></div></article>`;
+}
 })();
