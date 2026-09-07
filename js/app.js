@@ -367,7 +367,7 @@ async function openAccount(){
 }
 async function respondOrder(orderId, status){
   try{
-    const res = await fetch(ORDERS_API+'/'+orderId+'/status', { method:'PUT', headers: authHeaders(), body: JSON.stringify({ status }) });
+    const res = await fetch(ORDERS_API+'/'+orderId, { method:'PUT', headers: authHeaders(), body: JSON.stringify({ status }) });
     const data = await res.json();
     if(!res.ok){ toast(data.message || 'Could not update request'); return; }
     toast(status==='accepted' ? 'Request accepted' : 'Request rejected');
