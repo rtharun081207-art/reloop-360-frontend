@@ -68,8 +68,15 @@ function showView(id,btn){
   document.getElementById(id).classList.add('active');
   const titles={home:'Dashboard',industrial:'Industrial Exchange',industrialBrowse:'Industrial Listings',market:'LoopMarket',exchange:'Exchange Offers',donate:'Donate & ReLoop',formView:'Create Listing'};
   document.getElementById('pageTitle').textContent=titles[id]||'ReLoop 360';
-  if(btn){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
-  else document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn){
+    btn.classList.add('active');
+  } else {
+    const match = document.querySelector(`.nav-btn[onclick*="'${id}'"]`);
+    if(match) match.classList.add('active');
+  }
+
   if(id==='market') render();
   if(id==='industrialBrowse') renderIndustrial();
   if(id==='exchange') renderExchange();
@@ -89,7 +96,7 @@ function openVerifyModal(){
       <div class="scan-frame" id="scanFrame">🪪</div>
       <div class="verify-status" id="verifyStatus">Waiting for ID scan…</div>
       <input id="idUpload" type="file" accept="image/*" capture="environment" hidden onchange="runScan()">
-      <button class="primary" id="scanBtn" onclick="document.getElementById('idUpload').click()">📷 Scan / Upload Company ID</button>
+      <button class="chip" id="scanBtn" onclick="document.getElementById('idUpload').click()">📷 Scan / Upload Company ID</button>
     </div>`);
 }
 function runScan(){
@@ -115,7 +122,7 @@ function openTour(){
       <div class="tour-step"><div class="ti" style="background:var(--green-light);color:var(--green)">♻</div><div><b>2. LoopMarket</b><p>Real listings from real accounts. Request an item — the seller can accept or reject your request from their My Account. Use "Find Match" to see who else wants a similar item.</p></div></div>
       <div class="tour-step"><div class="ti" style="background:var(--amber-light);color:var(--amber)">💚</div><div><b>3. Donate & ReLoop</b><p>Give items directly to verified NGO partners by category.</p></div></div>
     </div>
-    <button class="primary" style="margin-top:16px" onclick="closeModal()">Got it</button>`);
+    <button class="chip" style="margin-top:16px;background:var(--green);color:#fff;border-color:var(--green)" onclick="closeModal()">Got it</button>`);
 }
 
 /* ---------- industrial: smart match (still demo data) ---------- */
@@ -127,7 +134,7 @@ const partners=[
 ];
 function runSmartMatch(){
   toast('Smart matching materials to partners…');
-  document.getElementById('matchList').innerHTML=partners.map(p=>`<div class="match-card"><div><div class="mname">${p.name}</div><div class="mtag">${p.type} • Handles ${p.material} • ${p.loc}</div></div><div style="display:flex;align-items:center;gap:10px"><span class="match-score">${p.score}% match</span><button onclick="toast('Connection request sent to ${p.name}')">Connect</button></div></div>`).join('');
+  document.getElementById('matchList').innerHTML=partners.map(p=>`<div class="match-card"><div><div class="mname">${p.name}</div><div class="mtag">${p.type} • Handles ${p.material} • ${p.loc}</div></div><div style="display:flex;align-items:center;gap:10px"><span class="match-score">${p.score}% match</span><button class="chip" onclick="toast('Connection request sent to ${p.name}')">Connect</button></div></div>`).join('');
 }
 function renderIndustrial(){
   document.getElementById('matchList').innerHTML='<p style="color:var(--muted);font-size:12.5px">Run Smart Match to see suggested recyclers &amp; NGOs for your surplus materials.</p>';
@@ -161,7 +168,13 @@ function render(){
 function card(p){
   const w=wishlist.includes(p._id);
   const isTaken = p.status==='requested' || p.status==='sold';
-  return `<article class="product"><div class="pimg">${p.icon||'📦'}<button class="wish" onclick="toggleWish('${p._id}')">${w?'♥':'♡'}</button></div><div class="pbody"><span class="pbadge ${p.price===0?'free':''}">${p.cat} • ${p.cond}</span>${p.exchange?'<span class="pbadge" style="background:#eef0fb;color:#4338ca;margin-left:5px">🔄 Swap OK</span>':''}<h3>${p.name}</h3><div class="price">${p.price?'₹'+p.price.toLocaleString():'FREE'}</div><div class="meta">${p.loc} ${p.verified?'• ✓ Verified seller':''}</div><div class="seller">Seller: ${p.seller}</div><div class="card-actions">${isTaken?'<button class="add" disabled>Already Requested</button>':`<button class="add" onclick="requestItem('${p._id}','buy')">Request Item</button>`}${p.exchange?`<button class="outline" onclick="requestItem('${p._id}','exchange')">🔄 Swap</button>`:''}<button class="outline" onclick="findMatches('${p._id}')">🔍 Find Match</button></div></div></article>`;
+  const requestBtn = isTaken
+    ? '<button class="chip" disabled style="opacity:0.5;cursor:not-allowed">Already Requested</button>'
+    : `<button class="chip" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="requestItem('${p._id}','buy')">Request Item</button>`;
+  const swapBtn = p.exchange
+    ? `<button class="chip" onclick="requestItem('${p._id}','exchange')">🔄 Swap</button>`
+    : '';
+  return `<article class="product"><div class="pimg">${p.icon||'📦'}<button class="wish" onclick="toggleWish('${p._id}')">${w?'♥':'♡'}</button></div><div class="pbody"><span class="pbadge ${p.price===0?'free':''}">${p.cat} • ${p.cond}</span>${p.exchange?'<span class="pbadge" style="background:#eef0fb;color:#4338ca;margin-left:5px">🔄 Swap OK</span>':''}<h3>${p.name}</h3><div class="price">${p.price?'₹'+p.price.toLocaleString():'FREE'}</div><div class="meta">${p.loc} ${p.verified?'• ✓ Verified seller':''}</div><div class="seller">Seller: ${p.seller}</div><div class="card-actions" style="display:flex;flex-wrap:wrap;gap:6px">${requestBtn}${swapBtn}<button class="chip" onclick="findMatches('${p._id}')">🔍 Find Match</button></div></div></article>`;
 }
 function toggleWish(id){wishlist=wishlist.includes(id)?wishlist.filter(x=>x!==id):[...wishlist,id];render();toast('Wishlist updated')}
 function openWishlist(){
@@ -212,7 +225,7 @@ const exchangeOffers=[
   {icon:'📗',offer:'Novel Collection (5 books)',want:'Cookbooks or comics',owner:'Meera S.',loc:'Bengaluru'},
 ];
 function renderExchange(){
-  document.getElementById('exchangeList').innerHTML=exchangeOffers.map(x=>`<div class="match-card"><div><div class="mname">${x.icon} ${x.offer}</div><div class="mtag">Wants: ${x.want} • ${x.owner} • ${x.loc}</div></div><button onclick="toast('Swap proposed to ${x.owner}')">Propose Swap</button></div>`).join('');
+  document.getElementById('exchangeList').innerHTML=exchangeOffers.map(x=>`<div class="match-card"><div><div class="mname">${x.icon} ${x.offer}</div><div class="mtag">Wants: ${x.want} • ${x.owner} • ${x.loc}</div></div><button class="chip" onclick="toast('Swap proposed to ${x.owner}')">Propose Swap</button></div>`).join('');
 }
 
 /* ---------- donate ---------- */
@@ -256,12 +269,18 @@ function previewPhotos(input){
 }
 async function submitForm(){
   if(!getToken()){ toast('Please log in first'); return; }
-  const name=document.getElementById('itemName').value.trim();
-  const cat=document.getElementById('itemCategory').value.trim()||'Books';
-  if(!name){toast('Please enter an item or material name');return}
+  const user = getUser();
+  const name = document.getElementById('itemName').value.trim();
+  const cat = document.getElementById('itemCategory').value.trim() || 'Books';
+  const locInput = document.querySelector('#formView input[placeholder="City / area"]');
+  const loc = locInput && locInput.value.trim() ? locInput.value.trim() : 'Chennai';
+  const condSelect = document.querySelector('#formView select');
+  const cond = condSelect ? condSelect.value : 'Good';
+  if(!name){ toast('Please enter an item or material name'); return; }
+  if(!user || !user.name){ toast('Could not identify your account — please log in again'); return; }
   try{
     const res = await fetch(API_BASE, { method:'POST', headers: authHeaders(), body: JSON.stringify({
-      name, cat, price:0, cond:'Good', loc:'Chennai', exchange:false, listingType: formListingType
+      name, cat, price:0, cond, loc, seller:user.name, exchange:false, listingType: formListingType
     })});
     const data = await res.json();
     if(!res.ok){ toast(data.message || 'Could not save listing'); return; }
@@ -333,15 +352,4 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
     showView('home');
     loadProducts();
   }
-  function card(p){
-  const w=wishlist.includes(p._id);
-  const isTaken = p.status==='requested' || p.status==='sold';
-  const requestBtn = isTaken
-    ? '<button class="chip" disabled style="opacity:0.5;cursor:not-allowed">Already Requested</button>'
-    : `<button class="chip" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="requestItem('${p._id}','buy')">Request Item</button>`;
-  const swapBtn = p.exchange
-    ? `<button class="chip" onclick="requestItem('${p._id}','exchange')">🔄 Swap</button>`
-    : '';
-  return `<article class="product"><div class="pimg">${p.icon||'📦'}<button class="wish" onclick="toggleWish('${p._id}')">${w?'♥':'♡'}</button></div><div class="pbody"><span class="pbadge ${p.price===0?'free':''}">${p.cat} • ${p.cond}</span>${p.exchange?'<span class="pbadge" style="background:#eef0fb;color:#4338ca;margin-left:5px">🔄 Swap OK</span>':''}<h3>${p.name}</h3><div class="price">${p.price?'₹'+p.price.toLocaleString():'FREE'}</div><div class="meta">${p.loc} ${p.verified?'• ✓ Verified seller':''}</div><div class="seller">Seller: ${p.seller}</div><div class="card-actions" style="display:flex;flex-wrap:wrap;gap:6px">${requestBtn}${swapBtn}<button class="chip" onclick="findMatches('${p._id}')">🔍 Find Match</button></div></div></article>`;
-}
 })();
