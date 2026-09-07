@@ -272,15 +272,26 @@ async function submitForm(){
   const user = getUser();
   const name = document.getElementById('itemName').value.trim();
   const cat = document.getElementById('itemCategory').value.trim() || 'Books';
+
+  // Quantity field has no id in the HTML — select it by its placeholder text
+  const qtyInput = document.querySelector('#formView input[placeholder="e.g. 50 kg / 5 items"]');
+  const qtyRaw = qtyInput ? qtyInput.value.trim() : '';
+  const qtyMatch = qtyRaw.match(/\d+/);
+  const quantity = qtyMatch ? Number(qtyMatch[0]) : 1;
+
   const locInput = document.querySelector('#formView input[placeholder="City / area"]');
   const loc = locInput && locInput.value.trim() ? locInput.value.trim() : 'Chennai';
+
+  // Condition <select> has no id in the HTML — select it by its position in the form
   const condSelect = document.querySelector('#formView select');
   const cond = condSelect ? condSelect.value : 'Good';
+
   if(!name){ toast('Please enter an item or material name'); return; }
   if(!user || !user.name){ toast('Could not identify your account — please log in again'); return; }
+
   try{
     const res = await fetch(API_BASE, { method:'POST', headers: authHeaders(), body: JSON.stringify({
-      name, cat, price:0, cond, loc, seller:user.name, exchange:false, listingType: formListingType
+      name, cat, price:0, cond, loc, quantity, seller:user.name, exchange:false, listingType: formListingType
     })});
     const data = await res.json();
     if(!res.ok){ toast(data.message || 'Could not save listing'); return; }
