@@ -267,13 +267,46 @@ function previewPhotos(input){
   const wrap=document.getElementById('photoPreview'); wrap.innerHTML='';
   [...input.files].slice(0,6).forEach(f=>{const r=new FileReader();r.onload=e=>{const img=document.createElement('img');img.src=e.target.result;wrap.appendChild(img)};r.readAsDataURL(f)});
 }
+
+// Maps whatever the user types/selects into the EXACT enum value the backend requires
+const CATEGORY_MAP = {
+  'books': 'Books',
+  'book': 'Books',
+  'clothes': 'Clothes',
+  'clothing': 'Clothes',
+  'textiles': 'Clothes',
+  'e-waste': 'E-Waste',
+  'ewaste': 'E-Waste',
+  'e-materials': 'E-Waste',
+  'electronics': 'E-Waste',
+  'furniture': 'Furniture'
+};
+function normalizeCategory(raw){
+  const key = (raw||'').trim().toLowerCase();
+  return CATEGORY_MAP[key] || 'Books'; // safe fallback so it never 400s on cat again
+}
+
+// Maps typed/selected condition into the EXACT enum value the backend requires
+const CONDITION_MAP = {
+  'new': 'New',
+  'good': 'Good',
+  'used': 'Used',
+  'working': 'Working',
+  'for recycling': 'For Recycling',
+  'recycling': 'For Recycling'
+};
+function normalizeCondition(raw){
+  const key = (raw||'').trim().toLowerCase();
+  return CONDITION_MAP[key] || 'Good';
+}
+
 async function submitForm(){
   if(!getToken()){ toast('Please log in first'); return; }
   const user = getUser();
   const name = document.getElementById('itemName').value.trim();
-  const cat = document.getElementById('itemCategory').value.trim() || 'Books';
+  const catRaw = document.getElementById('itemCategory').value.trim() || 'Books';
+  const cat = normalizeCategory(catRaw);
 
-  // Quantity field has no id in the HTML — select it by its placeholder text
   const qtyInput = document.querySelector('#formView input[placeholder="e.g. 50 kg / 5 items"]');
   const qtyRaw = qtyInput ? qtyInput.value.trim() : '';
   const qtyMatch = qtyRaw.match(/\d+/);
@@ -282,9 +315,8 @@ async function submitForm(){
   const locInput = document.querySelector('#formView input[placeholder="City / area"]');
   const loc = locInput && locInput.value.trim() ? locInput.value.trim() : 'Chennai';
 
-  // Condition <select> has no id in the HTML — select it by its position in the form
   const condSelect = document.querySelector('#formView select');
-  const cond = condSelect ? condSelect.value : 'Good';
+  const cond = normalizeCondition(condSelect ? condSelect.value : 'Good');
 
   if(!name){ toast('Please enter an item or material name'); return; }
   if(!user || !user.name){ toast('Could not identify your account — please log in again'); return; }
